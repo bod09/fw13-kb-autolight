@@ -141,6 +141,14 @@ def check_brightnessctl():
         sys.exit(1)
 
 
+def get_backlight(device):
+    brightness_path = Path(f"/sys/class/leds/{device}/brightness")
+    try:
+        return int(brightness_path.read_text().strip())
+    except (OSError, ValueError):
+        return None
+
+
 def set_backlight(device, value):
     try:
         subprocess.run(
@@ -214,10 +222,13 @@ def main():
                 logging.info("Light detected (raw=%d > %d), backlight OFF", raw, light)
         else:
             counter = 0
-            # Re-apply brightness periodically to recover from suspend/resume
-            # resets where the EC silently zeroes the backlight
+            # Recover from suspend/resume — the EC can silently zero the
+            # backlight. Check the actual value and only write if wrong.
             if state == "dark" and now - last_set >= 5:
-                set_backlight(kbd_device, brightness)
+                actual = get_backlight(kbd_device)
+                if actual is not None and actual != brightness:
+                    set_backlight(kbd_device, brightness)
+                    logging.info("Backlight was reset (was %d), restoring to %d%%", actual, brightness)
                 last_set = now
 
         time.sleep(interval)
