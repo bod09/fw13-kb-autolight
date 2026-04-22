@@ -33,6 +33,14 @@ sudo dnf install brightnessctl
 ## Installation
 
 ```bash
+curl -L https://github.com/bod09/fw13-kb-autolight/archive/refs/heads/main.tar.gz | tar xz
+cd fw13-kb-autolight-main
+./install.sh
+```
+
+Or if you have git installed:
+
+```bash
 git clone https://github.com/bod09/fw13-kb-autolight.git
 cd fw13-kb-autolight
 ./install.sh
