@@ -103,8 +103,9 @@ def check_ectool():
     if not shutil.which("ectool"):
         logging.error(
             "ectool not found on PATH. Install it first:\n"
-            "  Fedora (COPR): sudo dnf copr enable dustymabe/ectool && sudo dnf install ectool\n"
-            "  Or build from source: https://github.com/FrameworkComputer/ectool"
+            "  Via fw-fanctrl: https://github.com/TamtamHero/fw-fanctrl\n"
+            "  Via COPR: sudo dnf copr enable bsvh/fw-ectool && sudo dnf install fw-ectool\n"
+            "  Build from source: https://gitlab.howett.net/DHowett/ectool"
         )
         sys.exit(1)
 

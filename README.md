@@ -26,14 +26,22 @@ The gap between the two thresholds (20 and 40 by default) is the hysteresis zone
 
 ### Installing ectool
 
-Via COPR (recommended):
+**Option 1** — Install [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl) (includes ectool as a dependency):
 
 ```bash
-sudo dnf copr enable dustymabe/ectool
-sudo dnf install ectool
+git clone https://github.com/TamtamHero/fw-fanctrl.git
+cd fw-fanctrl
+sudo ./install.sh
 ```
 
-Or build from source: [github.com/FrameworkComputer/ectool](https://github.com/FrameworkComputer/ectool)
+**Option 2** — COPR (may not support all Fedora versions):
+
+```bash
+sudo dnf copr enable bsvh/fw-ectool
+sudo dnf install fw-ectool
+```
+
+**Option 3** — Build from source: [gitlab.howett.net/DHowett/ectool](https://gitlab.howett.net/DHowett/ectool)
 
 ### ectool permissions
 
