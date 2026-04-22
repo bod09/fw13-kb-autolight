@@ -58,7 +58,7 @@ Log out and back in for the group change to take effect.
 ## Installation
 
 ```bash
-git clone https://github.com/<your-user>/fw13-kb-autolight.git
+git clone https://github.com/bod09/fw13-kb-autolight.git
 cd fw13-kb-autolight
 ./install.sh
 ```

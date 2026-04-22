@@ -1,6 +1,6 @@
 [Unit]
 Description=Framework 13 Keyboard Backlight Auto-Control
-Documentation=https://github.com/fw13-kb-autolight
+Documentation=https://github.com/bod09/fw13-kb-autolight
 After=graphical-session.target
 
 [Service]
