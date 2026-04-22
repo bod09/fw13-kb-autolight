@@ -1,0 +1,15 @@
+[Unit]
+Description=Framework 13 Keyboard Backlight Auto-Control
+Documentation=https://github.com/fw13-kb-autolight
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/fw13-kb-autolight.py
+ExecStopPost=/usr/bin/ectool pwmsetkblight 0
+Restart=on-failure
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target
