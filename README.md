@@ -2,7 +2,7 @@
 
 Automatic keyboard backlight control for the Framework Laptop 13 on Fedora Linux.
 
-Keeps the keyboard backlight **off** by default and turns it on to a low brightness when the room gets dark, using the laptop's built-in ambient light sensor. Uses hysteresis (two thresholds) to prevent flickering when ambient light is near the boundary.
+Keeps the keyboard backlight **off** by default and turns it on to a low brightness when the room gets dark, using the laptop's built-in ambient light sensor. Turns on instantly in the dark and uses debounce when turning off to prevent flickering.
 
 ## How it works
 
@@ -96,7 +96,7 @@ Try reading the value in different lighting conditions:
 - Normal room lighting — note the value
 - Bright daylight — note the high value
 
-Set `dark` just above your "covered/dark" reading and `light` well above `dark` to create a comfortable hysteresis gap.
+Set `dark` to the value where you can no longer comfortably see the keys, and `light` to the value where you can.
 
 ### Finding your keyboard backlight device
 
@@ -131,9 +131,18 @@ systemctl --user start fw13-kb-autolight
 
 ## Uninstallation
 
+If you still have the source folder:
+
 ```bash
-cd fw13-kb-autolight
+cd fw13-kb-autolight-main
 ./uninstall.sh
+```
+
+Or re-download and uninstall:
+
+```bash
+curl -L https://github.com/bod09/fw13-kb-autolight/archive/refs/heads/main.tar.gz | tar xz
+./fw13-kb-autolight-main/uninstall.sh
 ```
 
 This stops the service, removes the daemon and service file, and optionally removes the config directory.
@@ -153,14 +162,6 @@ sudo modprobe hid_sensor_als
 
 # Make it persistent
 echo "hid_sensor_als" | sudo tee /etc/modules-load.d/hid_sensor_als.conf
-```
-
-### Service won't start after reboot
-
-By default, systemd user services only run while you are logged in. To keep the service running after logout:
-
-```bash
-loginctl enable-linger $USER
 ```
 
 ### KDE Plasma conflict

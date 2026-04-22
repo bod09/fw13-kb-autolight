@@ -3,7 +3,7 @@
 fw13-kb-autolight — Automatic keyboard backlight control for Framework Laptop 13.
 
 Reads the ambient light sensor and toggles the keyboard backlight via brightnessctl.
-Uses hysteresis (two thresholds) to avoid flickering near the boundary.
+Uses debounce to avoid flickering when turning off.
 """
 
 import configparser

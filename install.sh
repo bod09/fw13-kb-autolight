@@ -105,13 +105,3 @@ echo "  View logs:     journalctl --user -u $DAEMON_NAME -f"
 echo "  Edit config:   $CONFIG_DIR/$DAEMON_NAME.conf"
 echo "  Restart:       systemctl --user restart $DAEMON_NAME"
 echo ""
-
-# Linger check
-LINGER=$(loginctl show-user "$USER" -p Linger 2>/dev/null | cut -d= -f2 || echo "unknown")
-if [ "$LINGER" != "yes" ]; then
-    warn "Linger is not enabled for your user."
-    echo "  The service will only run while you are logged in."
-    echo "  To enable linger (service runs even when logged out):"
-    echo "    loginctl enable-linger $USER"
-    echo ""
-fi
