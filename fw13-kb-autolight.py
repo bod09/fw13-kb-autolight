@@ -22,7 +22,7 @@ DEFAULTS = {
     "dark": 0,
     "light": 1,
     "brightness": 1,
-    "interval": 2,
+    "interval": 1,
     "debounce": 3,
     "sensor": "",
     "keyboard": "",
@@ -194,13 +194,13 @@ def main():
             continue
 
         if state == "bright" and raw <= dark:
-            counter += 1
-            if counter >= debounce:
-                set_backlight(kbd_device, brightness)
-                state = "dark"
-                counter = 0
-                logging.info("Dark detected (raw=%d <= %d), backlight ON at %d%%", raw, dark, brightness)
+            # Turn on immediately — you need to see the keys now
+            set_backlight(kbd_device, brightness)
+            state = "dark"
+            counter = 0
+            logging.info("Dark detected (raw=%d <= %d), backlight ON at %d%%", raw, dark, brightness)
         elif state == "dark" and raw > light:
+            # Debounce before turning off — avoid flicker
             counter += 1
             if counter >= debounce:
                 set_backlight(kbd_device, 0)

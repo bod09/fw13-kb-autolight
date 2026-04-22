@@ -9,13 +9,13 @@ Keeps the keyboard backlight **off** by default and turns it on to a low brightn
 The daemon polls the ambient light sensor and controls the keyboard backlight via `brightnessctl`:
 
 ```
-                    raw <= 0 (3 consecutive readings)
+                    raw <= 0 (instant)
   [BRIGHT / OFF] ──────────────────────────────────────► [DARK / ON at 1%]
                  ◄──────────────────────────────────────
                     raw > 1 (3 consecutive readings)
 ```
 
-A debounce counter (default: 3) requires multiple consecutive readings past the threshold before switching. This prevents flickering from brief sensor fluctuations.
+Turning **on** is instant — when it goes dark you need to see the keys now. Turning **off** is debounced (default: 3 consecutive readings) to prevent flickering from brief sensor fluctuations.
 
 ## Prerequisites
 
@@ -66,7 +66,7 @@ brightness = 1  # Backlight brightness (0-100) when dark
 device =        # Leave blank for auto-detect, or set device name
 
 [polling]
-interval = 2    # Seconds between sensor reads
+interval = 1    # Seconds between sensor reads
 debounce = 3    # Consecutive readings needed before switching
 
 [sensor]
