@@ -164,12 +164,6 @@ sudo modprobe hid_sensor_als
 echo "hid_sensor_als" | sudo tee /etc/modules-load.d/hid_sensor_als.conf
 ```
 
-### KDE Plasma conflict
-
-KDE's Powerdevil may also try to manage the keyboard backlight. To avoid conflicts, disable KDE's keyboard backlight control:
-
-**System Settings → Power Management → Keyboard Brightness** — uncheck automatic adjustment or set it to manual.
-
 ### Service keeps restarting
 
 Check the logs for errors:
