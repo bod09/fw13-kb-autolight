@@ -19,8 +19,8 @@ from pathlib import Path
 
 # Built-in defaults (used if config file is missing or incomplete)
 DEFAULTS = {
-    "dark": 20,
-    "light": 40,
+    "dark": 0,
+    "light": 2,
     "brightness": 1,
     "interval": 2,
     "sensor": "",
@@ -186,7 +186,7 @@ def main():
             time.sleep(interval)
             continue
 
-        if state == "bright" and raw < dark:
+        if state == "bright" and raw <= dark:
             set_backlight(kbd_device, brightness)
             state = "dark"
             logging.info("Dark detected (raw=%d < %d), backlight ON at %d%%", raw, dark, brightness)
