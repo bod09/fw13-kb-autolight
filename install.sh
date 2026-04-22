@@ -28,36 +28,39 @@ if ! command -v python3 &>/dev/null; then
 fi
 info "Python 3 found: $(python3 --version)"
 
-# ectool
-if ! command -v ectool &>/dev/null; then
-    error "ectool is not installed."
+# brightnessctl
+if ! command -v brightnessctl &>/dev/null; then
+    error "brightnessctl is not installed."
     echo ""
-    echo "  Option 1 — Install fw-fanctrl (includes ectool):"
-    echo "    git clone https://github.com/TamtamHero/fw-fanctrl.git"
-    echo "    cd fw-fanctrl && sudo ./install.sh"
-    echo ""
-    echo "  Option 2 — COPR (may not support all Fedora versions):"
-    echo "    sudo dnf copr enable bsvh/fw-ectool"
-    echo "    sudo dnf install fw-ectool"
-    echo ""
-    echo "  Option 3 — Build from source:"
-    echo "    https://gitlab.howett.net/DHowett/ectool"
+    echo "  Install it with:"
+    echo "    sudo dnf install brightnessctl"
     echo ""
     exit 1
 fi
-info "ectool found: $(command -v ectool)"
+info "brightnessctl found: $(command -v brightnessctl)"
 
-# Test ectool communication
-if ! ectool pwmgetkblight &>/dev/null; then
-    warn "ectool cannot communicate with the EC."
-    echo "  You may need a udev rule to grant your user access to /dev/cros_ec."
-    echo "  See the README for instructions."
+# Keyboard backlight
+KBD_MATCHES=$(ls -d /sys/class/leds/*kbd_backlight 2>/dev/null || true)
+if [ -z "$KBD_MATCHES" ]; then
+    warn "No keyboard backlight device found in /sys/class/leds/"
+    echo "  This may indicate the embedded controller driver is not loaded."
     echo ""
-    echo "  Continuing installation anyway — fix permissions before starting the service."
+    echo "  Continuing installation anyway — the service will fail until the device is available."
+else
+    KBD_DEVICE=$(basename "$(echo "$KBD_MATCHES" | head -1)")
+    info "Keyboard backlight found: $KBD_DEVICE"
+
+    # Test brightnessctl access
+    if ! brightnessctl --device="$KBD_DEVICE" info &>/dev/null; then
+        warn "brightnessctl cannot access the keyboard backlight."
+        echo "  This usually resolves after a logout/login or reboot."
+        echo ""
+        echo "  Continuing installation anyway."
+    fi
 fi
 
 # Ambient light sensor
-SENSOR_MATCHES=$(find /sys/bus/iio/devices/iio:device*/in_illuminance_raw 2>/dev/null || true)
+SENSOR_MATCHES=$(ls /sys/bus/iio/devices/iio:device*/in_illuminance_raw 2>/dev/null || true)
 if [ -z "$SENSOR_MATCHES" ]; then
     warn "No ambient light sensor found."
     echo "  Expected at: /sys/bus/iio/devices/iio:device*/in_illuminance_raw"

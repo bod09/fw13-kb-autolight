@@ -6,7 +6,7 @@ Keeps the keyboard backlight **off** by default and turns it on to a low brightn
 
 ## How it works
 
-The daemon polls the ambient light sensor and controls the keyboard backlight via `ectool`:
+The daemon polls the ambient light sensor and controls the keyboard backlight via `brightnessctl`:
 
 ```
                     raw < 20 (dark)
@@ -22,46 +22,13 @@ The gap between the two thresholds (20 and 40 by default) is the hysteresis zone
 - **Framework Laptop 13** (Intel or AMD) with an ambient light sensor
 - **Fedora 41+** (other distros should work but are untested)
 - **Python 3** (included with Fedora)
-- **ectool** — communicates with the Framework embedded controller
+- **brightnessctl** — controls the keyboard backlight without root
 
-### Installing ectool
-
-**Option 1** — Install [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl) (includes ectool as a dependency):
+### Installing brightnessctl
 
 ```bash
-git clone https://github.com/TamtamHero/fw-fanctrl.git
-cd fw-fanctrl
-sudo ./install.sh
+sudo dnf install brightnessctl
 ```
-
-**Option 2** — COPR (may not support all Fedora versions):
-
-```bash
-sudo dnf copr enable bsvh/fw-ectool
-sudo dnf install fw-ectool
-```
-
-**Option 3** — Build from source: [gitlab.howett.net/DHowett/ectool](https://gitlab.howett.net/DHowett/ectool)
-
-### ectool permissions
-
-If `ectool pwmgetkblight` fails with a permission error, you need a udev rule to grant your user access to `/dev/cros_ec`.
-
-Create `/etc/udev/rules.d/99-cros-ec.rules`:
-
-```
-KERNEL=="cros_ec", SUBSYSTEM=="misc", MODE="0660", GROUP="plugdev"
-```
-
-Then add your user to the `plugdev` group and reload:
-
-```bash
-sudo usermod -aG plugdev $USER
-sudo udevadm control --reload-rules
-sudo udevadm trigger
-```
-
-Log out and back in for the group change to take effect.
 
 ## Installation
 
@@ -72,7 +39,7 @@ cd fw13-kb-autolight
 ```
 
 The install script will:
-1. Check for Python 3, ectool, and the ambient light sensor
+1. Check for Python 3, brightnessctl, keyboard backlight, and the ambient light sensor
 2. Install the daemon to `~/.local/bin/`
 3. Install the default config to `~/.config/fw13-kb-autolight/`
 4. Install and start a systemd user service (no root needed)
@@ -88,12 +55,13 @@ light = 40      # Sensor value above which backlight turns OFF
 
 [backlight]
 brightness = 1  # Backlight brightness (0-100) when dark
+device =        # Leave blank for auto-detect, or set device name
 
 [polling]
 interval = 2    # Seconds between sensor reads
 
 [sensor]
-device =        # Leave blank for auto-detect, or set full path
+device =        # Leave blank for auto-detect, or set full sysfs path
 ```
 
 After editing, restart the service:
@@ -115,11 +83,23 @@ cat /sys/bus/iio/devices/iio:device0/in_illuminance_raw
 ```
 
 Try reading the value in different lighting conditions:
-- Cover the sensor with your hand → note the low value
-- Normal room lighting → note the value
-- Bright daylight → note the high value
+- Cover the sensor with your hand — note the low value
+- Normal room lighting — note the value
+- Bright daylight — note the high value
 
 Set `dark` just above your "covered/dark" reading and `light` well above `dark` to create a comfortable hysteresis gap.
+
+### Finding your keyboard backlight device
+
+```bash
+ls /sys/class/leds/*kbd_backlight
+```
+
+Common device names:
+- `chromeos::kbd_backlight` — most Framework 13 models
+- `framework_laptop::kbd_backlight` — with the framework-laptop-kmod kernel module
+
+The daemon auto-detects this, but you can pin it in the config under `[backlight] device`.
 
 ## Usage
 
@@ -178,7 +158,7 @@ loginctl enable-linger $USER
 
 KDE's Powerdevil may also try to manage the keyboard backlight. To avoid conflicts, disable KDE's keyboard backlight control:
 
-**System Settings → Power Management → Keyboard Brightness** → uncheck automatic adjustment or set it to manual.
+**System Settings → Power Management → Keyboard Brightness** — uncheck automatic adjustment or set it to manual.
 
 ### Service keeps restarting
 
@@ -189,7 +169,6 @@ journalctl --user -u fw13-kb-autolight --no-pager -n 50
 ```
 
 Common causes:
-- ectool permission denied (see [ectool permissions](#ectool-permissions))
 - Sensor path changed after a kernel update (restart the service to re-detect)
 - Invalid config values (dark must be less than light)
 

@@ -54,9 +54,12 @@ fi
 
 # --- Turn off backlight ---
 
-if command -v ectool &>/dev/null; then
-    info "Turning off keyboard backlight..."
-    ectool pwmsetkblight 0 2>/dev/null || true
+if command -v brightnessctl &>/dev/null; then
+    KBD_DEVICE=$(basename "$(ls -d /sys/class/leds/*kbd_backlight 2>/dev/null | head -1)" 2>/dev/null || true)
+    if [ -n "$KBD_DEVICE" ]; then
+        info "Turning off keyboard backlight..."
+        brightnessctl --device="$KBD_DEVICE" set 0 &>/dev/null || true
+    fi
 fi
 
 echo ""

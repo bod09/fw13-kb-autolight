@@ -2,7 +2,7 @@
 """
 fw13-kb-autolight — Automatic keyboard backlight control for Framework Laptop 13.
 
-Reads the ambient light sensor and toggles the keyboard backlight via ectool.
+Reads the ambient light sensor and toggles the keyboard backlight via brightnessctl.
 Uses hysteresis (two thresholds) to avoid flickering near the boundary.
 """
 
@@ -23,11 +23,13 @@ DEFAULTS = {
     "light": 40,
     "brightness": 1,
     "interval": 2,
-    "device": "",
+    "sensor": "",
+    "keyboard": "",
 }
 
 CONFIG_PATH = os.path.expanduser("~/.config/fw13-kb-autolight/fw13-kb-autolight.conf")
 SENSOR_GLOB = "/sys/bus/iio/devices/iio:device*/in_illuminance_raw"
+KBD_BACKLIGHT_GLOB = "/sys/class/leds/*kbd_backlight"
 
 running = True
 
@@ -50,7 +52,8 @@ def load_config():
     light = config.getint("thresholds", "light", fallback=DEFAULTS["light"])
     brightness = config.getint("backlight", "brightness", fallback=DEFAULTS["brightness"])
     interval = config.getint("polling", "interval", fallback=DEFAULTS["interval"])
-    device = config.get("sensor", "device", fallback=DEFAULTS["device"]).strip()
+    sensor = config.get("sensor", "device", fallback=DEFAULTS["sensor"]).strip()
+    keyboard = config.get("backlight", "device", fallback=DEFAULTS["keyboard"]).strip()
 
     if dark >= light:
         logging.error(
@@ -67,7 +70,7 @@ def load_config():
         logging.error("Invalid config: poll interval (%d) must be at least 1 second", interval)
         sys.exit(1)
 
-    return dark, light, brightness, interval, device
+    return dark, light, brightness, interval, sensor, keyboard
 
 
 def find_sensor(device_override):
@@ -93,51 +96,55 @@ def find_sensor(device_override):
     if len(matches) > 1:
         logging.info(
             "Multiple sensors found (%d total). Using the first one. "
-            "Set 'device' in the config file to override.",
+            "Set 'device' in [sensor] config to override.",
             len(matches),
         )
     return sensor
 
 
-def check_ectool():
-    if not shutil.which("ectool"):
+def find_keyboard(device_override):
+    if device_override:
+        return device_override
+
+    matches = sorted(glob.glob(KBD_BACKLIGHT_GLOB))
+    if not matches:
         logging.error(
-            "ectool not found on PATH. Install it first:\n"
-            "  Via fw-fanctrl: https://github.com/TamtamHero/fw-fanctrl\n"
-            "  Via COPR: sudo dnf copr enable bsvh/fw-ectool && sudo dnf install fw-ectool\n"
-            "  Build from source: https://gitlab.howett.net/DHowett/ectool"
+            "No keyboard backlight found at %s. "
+            "Check that your Framework Laptop keyboard backlight is available.",
+            KBD_BACKLIGHT_GLOB,
         )
         sys.exit(1)
 
-    # Test that ectool can actually communicate with the EC
+    # Extract device name from path (e.g., "chromeos::kbd_backlight")
+    device = os.path.basename(matches[0])
+    logging.info("Auto-detected keyboard backlight: %s", device)
+    if len(matches) > 1:
+        logging.info(
+            "Multiple keyboard backlights found (%d total). Using the first one. "
+            "Set 'device' in [backlight] config to override.",
+            len(matches),
+        )
+    return device
+
+
+def check_brightnessctl():
+    if not shutil.which("brightnessctl"):
+        logging.error(
+            "brightnessctl not found. Install it with: sudo dnf install brightnessctl"
+        )
+        sys.exit(1)
+
+
+def set_backlight(device, value):
     try:
         subprocess.run(
-            ["ectool", "pwmgetkblight"],
+            ["brightnessctl", "--device", device, "set", str(value)],
             check=True, capture_output=True, timeout=5,
         )
     except subprocess.CalledProcessError as e:
-        stderr = e.stderr.decode().strip()
-        logging.error(
-            "ectool cannot communicate with the EC: %s\n"
-            "You may need a udev rule to grant access to /dev/cros_ec. See the README.",
-            stderr,
-        )
-        sys.exit(1)
+        logging.error("brightnessctl failed: %s", e.stderr.decode().strip())
     except subprocess.TimeoutExpired:
-        logging.error("ectool timed out communicating with the EC.")
-        sys.exit(1)
-
-
-def set_backlight(value):
-    try:
-        subprocess.run(
-            ["ectool", "pwmsetkblight", str(value)],
-            check=True, capture_output=True, timeout=5,
-        )
-    except subprocess.CalledProcessError as e:
-        logging.error("ectool pwmsetkblight failed: %s", e.stderr.decode().strip())
-    except subprocess.TimeoutExpired:
-        logging.error("ectool pwmsetkblight timed out")
+        logging.error("brightnessctl timed out")
 
 
 def read_sensor(sensor_path):
@@ -159,18 +166,19 @@ def main():
     signal.signal(signal.SIGTERM, handle_signal)
     signal.signal(signal.SIGINT, handle_signal)
 
-    dark, light, brightness, interval, device_override = load_config()
-    sensor_path = find_sensor(device_override)
-    check_ectool()
+    dark, light, brightness, interval, sensor_override, kbd_override = load_config()
+    sensor_path = find_sensor(sensor_override)
+    kbd_device = find_keyboard(kbd_override)
+    check_brightnessctl()
 
     logging.info(
-        "Starting: dark=%d, light=%d, brightness=%d%%, poll=%ds",
-        dark, light, brightness, interval,
+        "Starting: dark=%d, light=%d, brightness=%d%%, poll=%ds, keyboard=%s",
+        dark, light, brightness, interval, kbd_device,
     )
 
     # Start with backlight off
     state = "bright"
-    set_backlight(0)
+    set_backlight(kbd_device, 0)
 
     while running:
         raw = read_sensor(sensor_path)
@@ -179,18 +187,18 @@ def main():
             continue
 
         if state == "bright" and raw < dark:
-            set_backlight(brightness)
+            set_backlight(kbd_device, brightness)
             state = "dark"
             logging.info("Dark detected (raw=%d < %d), backlight ON at %d%%", raw, dark, brightness)
         elif state == "dark" and raw > light:
-            set_backlight(0)
+            set_backlight(kbd_device, 0)
             state = "bright"
             logging.info("Light detected (raw=%d > %d), backlight OFF", raw, light)
 
         time.sleep(interval)
 
     # Clean shutdown
-    set_backlight(0)
+    set_backlight(kbd_device, 0)
     logging.info("Shutting down, backlight off")
 
 
