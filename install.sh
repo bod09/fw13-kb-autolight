@@ -28,17 +28,6 @@ if ! command -v python3 &>/dev/null; then
 fi
 info "Python 3 found: $(python3 --version)"
 
-# brightnessctl
-if ! command -v brightnessctl &>/dev/null; then
-    error "brightnessctl is not installed."
-    echo ""
-    echo "  Install it with:"
-    echo "    sudo dnf install brightnessctl"
-    echo ""
-    exit 1
-fi
-info "brightnessctl found: $(command -v brightnessctl)"
-
 # Keyboard backlight
 KBD_MATCHES=$(ls -d /sys/class/leds/*kbd_backlight 2>/dev/null || true)
 if [ -z "$KBD_MATCHES" ]; then
@@ -49,14 +38,6 @@ if [ -z "$KBD_MATCHES" ]; then
 else
     KBD_DEVICE=$(basename "$(echo "$KBD_MATCHES" | head -1)")
     info "Keyboard backlight found: $KBD_DEVICE"
-
-    # Test brightnessctl access
-    if ! brightnessctl --device="$KBD_DEVICE" info &>/dev/null; then
-        warn "brightnessctl cannot access the keyboard backlight."
-        echo "  This usually resolves after a logout/login or reboot."
-        echo ""
-        echo "  Continuing installation anyway."
-    fi
 fi
 
 # Ambient light sensor

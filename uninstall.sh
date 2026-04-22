@@ -54,12 +54,11 @@ fi
 
 # --- Turn off backlight ---
 
-if command -v brightnessctl &>/dev/null; then
-    KBD_DEVICE=$(basename "$(ls -d /sys/class/leds/*kbd_backlight 2>/dev/null | head -1)" 2>/dev/null || true)
-    if [ -n "$KBD_DEVICE" ]; then
-        info "Turning off keyboard backlight..."
-        brightnessctl --device="$KBD_DEVICE" set 0 &>/dev/null || true
-    fi
+KBD_DEVICE=$(basename "$(ls -d /sys/class/leds/*kbd_backlight 2>/dev/null | head -1)" 2>/dev/null || true)
+if [ -n "$KBD_DEVICE" ]; then
+    info "Turning off keyboard backlight..."
+    busctl call org.freedesktop.login1 /org/freedesktop/login1/session/auto \
+        org.freedesktop.login1.Session SetBrightness ssu leds "$KBD_DEVICE" 0 &>/dev/null || true
 fi
 
 echo ""

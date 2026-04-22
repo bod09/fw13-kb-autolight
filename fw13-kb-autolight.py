@@ -2,7 +2,7 @@
 """
 fw13-kb-autolight — Automatic keyboard backlight control for Framework Laptop 13.
 
-Reads the ambient light sensor and toggles the keyboard backlight via brightnessctl.
+Reads the ambient light sensor and toggles the keyboard backlight via logind D-Bus.
 Uses debounce to avoid flickering when turning off.
 """
 
@@ -10,7 +10,6 @@ import configparser
 import glob
 import logging
 import os
-import shutil
 import signal
 import subprocess
 import sys
@@ -133,18 +132,9 @@ def find_keyboard(device_override):
     return device
 
 
-def check_brightnessctl():
-    if not shutil.which("brightnessctl"):
-        logging.error(
-            "brightnessctl not found. Install it with: sudo dnf install brightnessctl"
-        )
-        sys.exit(1)
-
-
 def get_backlight(device):
-    brightness_path = Path(f"/sys/class/leds/{device}/brightness")
     try:
-        return int(brightness_path.read_text().strip())
+        return int(Path(f"/sys/class/leds/{device}/brightness").read_text().strip())
     except (OSError, ValueError):
         return None
 
@@ -152,13 +142,20 @@ def get_backlight(device):
 def set_backlight(device, value):
     try:
         subprocess.run(
-            ["brightnessctl", "--device", device, "set", str(value)],
+            [
+                "busctl", "call",
+                "org.freedesktop.login1",
+                "/org/freedesktop/login1/session/auto",
+                "org.freedesktop.login1.Session",
+                "SetBrightness", "ssu",
+                "leds", device, str(value),
+            ],
             check=True, capture_output=True, timeout=5,
         )
     except subprocess.CalledProcessError as e:
-        logging.error("brightnessctl failed: %s", e.stderr.decode().strip())
+        logging.error("Failed to set backlight: %s", e.stderr.decode().strip())
     except subprocess.TimeoutExpired:
-        logging.error("brightnessctl timed out")
+        logging.error("Failed to set backlight: timed out")
 
 
 def read_sensor(sensor_path):
@@ -183,7 +180,6 @@ def main():
     dark, light, brightness, interval, debounce, sensor_override, kbd_override = load_config()
     sensor_path = find_sensor(sensor_override)
     kbd_device = find_keyboard(kbd_override)
-    check_brightnessctl()
 
     logging.info(
         "Starting: dark=%d, light=%d, brightness=%d%%, poll=%ds, debounce=%d, keyboard=%s",

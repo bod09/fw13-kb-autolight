@@ -6,7 +6,7 @@ Keeps the keyboard backlight **off** by default and turns it on to a low brightn
 
 ## How it works
 
-The daemon polls the ambient light sensor and controls the keyboard backlight via `brightnessctl`:
+The daemon polls the ambient light sensor and controls the keyboard backlight via logind D-Bus (no extra dependencies):
 
 ```
                     raw <= 0 (instant)
@@ -20,15 +20,10 @@ Turning **on** is instant — when it goes dark you need to see the keys now. Tu
 ## Prerequisites
 
 - **Framework Laptop 13** (Intel or AMD) with an ambient light sensor
-- **Fedora 41+** (other distros should work but are untested)
+- **Fedora 41+** (other distros with systemd should work but are untested)
 - **Python 3** (included with Fedora)
-- **brightnessctl** — controls the keyboard backlight without root
 
-### Installing brightnessctl
-
-```bash
-sudo dnf install brightnessctl
-```
+No additional packages to install — uses `busctl` (part of systemd) to control the backlight without root.
 
 ## Installation
 
@@ -47,7 +42,7 @@ cd fw13-kb-autolight
 ```
 
 The install script will:
-1. Check for Python 3, brightnessctl, keyboard backlight, and the ambient light sensor
+1. Check for Python 3, keyboard backlight, and the ambient light sensor
 2. Install the daemon to `~/.local/bin/`
 3. Install the default config to `~/.config/fw13-kb-autolight/`
 4. Install and start a systemd user service (no root needed)
