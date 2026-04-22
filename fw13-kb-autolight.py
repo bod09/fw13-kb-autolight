@@ -186,6 +186,7 @@ def main():
     state = "bright"
     set_backlight(kbd_device, 0)
     counter = 0
+    last_set = 0
 
     while running:
         raw = read_sensor(sensor_path)
@@ -193,11 +194,14 @@ def main():
             time.sleep(interval)
             continue
 
+        now = time.monotonic()
+
         if state == "bright" and raw <= dark:
             # Turn on immediately — you need to see the keys now
             set_backlight(kbd_device, brightness)
             state = "dark"
             counter = 0
+            last_set = now
             logging.info("Dark detected (raw=%d <= %d), backlight ON at %d%%", raw, dark, brightness)
         elif state == "dark" and raw > light:
             # Debounce before turning off — avoid flicker
@@ -206,9 +210,15 @@ def main():
                 set_backlight(kbd_device, 0)
                 state = "bright"
                 counter = 0
+                last_set = now
                 logging.info("Light detected (raw=%d > %d), backlight OFF", raw, light)
         else:
             counter = 0
+            # Re-apply brightness periodically to recover from suspend/resume
+            # resets where the EC silently zeroes the backlight
+            if state == "dark" and now - last_set >= 5:
+                set_backlight(kbd_device, brightness)
+                last_set = now
 
         time.sleep(interval)
 
