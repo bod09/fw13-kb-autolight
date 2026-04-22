@@ -9,13 +9,13 @@ Keeps the keyboard backlight **off** by default and turns it on to a low brightn
 The daemon polls the ambient light sensor and controls the keyboard backlight via `brightnessctl`:
 
 ```
-                    raw <= 0 (dark)
-  [BRIGHT / OFF] ──────────────────► [DARK / ON at 1%]
-                 ◄──────────────────
-                    raw > 2 (light)
+                    raw <= 0 (3 consecutive readings)
+  [BRIGHT / OFF] ──────────────────────────────────────► [DARK / ON at 1%]
+                 ◄──────────────────────────────────────
+                    raw > 1 (3 consecutive readings)
 ```
 
-The gap between the two thresholds (0 and 2 by default) is the hysteresis zone — it prevents the backlight from rapidly toggling when ambient light hovers near a single value.
+A debounce counter (default: 3) requires multiple consecutive readings past the threshold before switching. This prevents flickering from brief sensor fluctuations.
 
 ## Prerequisites
 
@@ -59,7 +59,7 @@ Edit `~/.config/fw13-kb-autolight/fw13-kb-autolight.conf`:
 ```ini
 [thresholds]
 dark = 0        # Sensor value at or below which backlight turns ON
-light = 2       # Sensor value above which backlight turns OFF
+light = 1       # Sensor value above which backlight turns OFF
 
 [backlight]
 brightness = 1  # Backlight brightness (0-100) when dark
@@ -67,6 +67,7 @@ device =        # Leave blank for auto-detect, or set device name
 
 [polling]
 interval = 2    # Seconds between sensor reads
+debounce = 3    # Consecutive readings needed before switching
 
 [sensor]
 device =        # Leave blank for auto-detect, or set full sysfs path

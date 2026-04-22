@@ -20,9 +20,10 @@ from pathlib import Path
 # Built-in defaults (used if config file is missing or incomplete)
 DEFAULTS = {
     "dark": 0,
-    "light": 2,
+    "light": 1,
     "brightness": 1,
     "interval": 2,
+    "debounce": 3,
     "sensor": "",
     "keyboard": "",
 }
@@ -52,6 +53,7 @@ def load_config():
     light = config.getint("thresholds", "light", fallback=DEFAULTS["light"])
     brightness = config.getint("backlight", "brightness", fallback=DEFAULTS["brightness"])
     interval = config.getint("polling", "interval", fallback=DEFAULTS["interval"])
+    debounce = config.getint("polling", "debounce", fallback=DEFAULTS["debounce"])
     sensor = config.get("sensor", "device", fallback=DEFAULTS["sensor"]).strip()
     keyboard = config.get("backlight", "device", fallback=DEFAULTS["keyboard"]).strip()
 
@@ -70,7 +72,11 @@ def load_config():
         logging.error("Invalid config: poll interval (%d) must be at least 1 second", interval)
         sys.exit(1)
 
-    return dark, light, brightness, interval, sensor, keyboard
+    if debounce < 1:
+        logging.error("Invalid config: debounce (%d) must be at least 1", debounce)
+        sys.exit(1)
+
+    return dark, light, brightness, interval, debounce, sensor, keyboard
 
 
 def find_sensor(device_override):
@@ -166,19 +172,20 @@ def main():
     signal.signal(signal.SIGTERM, handle_signal)
     signal.signal(signal.SIGINT, handle_signal)
 
-    dark, light, brightness, interval, sensor_override, kbd_override = load_config()
+    dark, light, brightness, interval, debounce, sensor_override, kbd_override = load_config()
     sensor_path = find_sensor(sensor_override)
     kbd_device = find_keyboard(kbd_override)
     check_brightnessctl()
 
     logging.info(
-        "Starting: dark=%d, light=%d, brightness=%d%%, poll=%ds, keyboard=%s",
-        dark, light, brightness, interval, kbd_device,
+        "Starting: dark=%d, light=%d, brightness=%d%%, poll=%ds, debounce=%d, keyboard=%s",
+        dark, light, brightness, interval, debounce, kbd_device,
     )
 
     # Start with backlight off
     state = "bright"
     set_backlight(kbd_device, 0)
+    counter = 0
 
     while running:
         raw = read_sensor(sensor_path)
@@ -187,13 +194,21 @@ def main():
             continue
 
         if state == "bright" and raw <= dark:
-            set_backlight(kbd_device, brightness)
-            state = "dark"
-            logging.info("Dark detected (raw=%d < %d), backlight ON at %d%%", raw, dark, brightness)
+            counter += 1
+            if counter >= debounce:
+                set_backlight(kbd_device, brightness)
+                state = "dark"
+                counter = 0
+                logging.info("Dark detected (raw=%d <= %d), backlight ON at %d%%", raw, dark, brightness)
         elif state == "dark" and raw > light:
-            set_backlight(kbd_device, 0)
-            state = "bright"
-            logging.info("Light detected (raw=%d > %d), backlight OFF", raw, light)
+            counter += 1
+            if counter >= debounce:
+                set_backlight(kbd_device, 0)
+                state = "bright"
+                counter = 0
+                logging.info("Light detected (raw=%d > %d), backlight OFF", raw, light)
+        else:
+            counter = 0
 
         time.sleep(interval)
 
