@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fw13-kb-autolight — Automatic keyboard backlight control for Framework Laptop 13.
+fw13-kb-autolight — Automatic keyboard backlight control for Linux laptops.
 
 Reads the ambient light sensor and toggles the keyboard backlight via logind D-Bus.
 Uses debounce to avoid flickering when turning off.
@@ -115,7 +115,7 @@ def find_keyboard(device_override):
     if not matches:
         logging.error(
             "No keyboard backlight found at %s. "
-            "Check that your Framework Laptop keyboard backlight is available.",
+            "Check that your laptop has a keyboard backlight and the driver is loaded.",
             KBD_BACKLIGHT_GLOB,
         )
         sys.exit(1)

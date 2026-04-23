@@ -1,8 +1,12 @@
 # fw13-kb-autolight
 
-Automatic keyboard backlight control for the Framework Laptop 13 on Fedora Linux.
+Automatic keyboard backlight control based on ambient light for Linux laptops.
 
 Keeps the keyboard backlight **off** by default and turns it on to a low brightness when the room gets dark, using the laptop's built-in ambient light sensor. Turns on instantly in the dark and uses debounce when turning off to prevent flickering.
+
+Works on any Linux laptop with an IIO ambient light sensor and a keyboard backlight — not limited to Framework laptops.
+
+> **Tested on:** Framework Laptop 13 (AMD), Fedora 43, KDE Plasma. Other laptops and distros with systemd should work but are untested.
 
 ## How it works
 
@@ -19,9 +23,11 @@ Turning **on** is instant — when it goes dark you need to see the keys now. Tu
 
 ## Prerequisites
 
-- **Framework Laptop 13** (Intel or AMD) with an ambient light sensor
-- **Fedora 41+** (other distros with systemd should work but are untested)
-- **Python 3** (included with Fedora)
+- A Linux laptop with:
+  - An ambient light sensor exposed at `/sys/bus/iio/devices/iio:device*/in_illuminance_raw`
+  - A keyboard backlight in `/sys/class/leds/*kbd_backlight`
+- **systemd** (for the user service and `busctl`)
+- **Python 3**
 
 No additional packages to install — uses `busctl` (part of systemd) to control the backlight without root.
 
@@ -93,6 +99,8 @@ Try reading the value in different lighting conditions:
 
 Set `dark` to the value where you can no longer comfortably see the keys, and `light` to the value where you can.
 
+> **Note:** The default thresholds (dark=0, light=1) were tuned for the Framework Laptop 13 which has a narrow sensor range (0–16). Other laptops may have much wider ranges and will need different values.
+
 ### Finding your keyboard backlight device
 
 ```bash
@@ -100,8 +108,11 @@ ls /sys/class/leds/*kbd_backlight
 ```
 
 Common device names:
-- `chromeos::kbd_backlight` — most Framework 13 models
-- `framework_laptop::kbd_backlight` — with the framework-laptop-kmod kernel module
+- `chromeos::kbd_backlight` — Framework laptops
+- `framework_laptop::kbd_backlight` — Framework with framework-laptop-kmod
+- `tpacpi::kbd_backlight` — ThinkPads
+- `asus::kbd_backlight` — ASUS laptops
+- `dell::kbd_backlight` — Dell laptops
 
 The daemon auto-detects this, but you can pin it in the config under `[backlight] device`.
 

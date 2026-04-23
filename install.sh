@@ -32,7 +32,7 @@ info "Python 3 found: $(python3 --version)"
 KBD_MATCHES=$(ls -d /sys/class/leds/*kbd_backlight 2>/dev/null || true)
 if [ -z "$KBD_MATCHES" ]; then
     warn "No keyboard backlight device found in /sys/class/leds/"
-    echo "  This may indicate the embedded controller driver is not loaded."
+    echo "  Your laptop may not have a keyboard backlight, or the driver may not be loaded."
     echo ""
     echo "  Continuing installation anyway — the service will fail until the device is available."
 else
