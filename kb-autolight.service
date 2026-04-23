@@ -1,11 +1,11 @@
 [Unit]
 Description=Automatic Keyboard Backlight Control
-Documentation=https://github.com/bod09/fw13-kb-autolight
+Documentation=https://github.com/bod09/kb-autolight
 After=graphical-session.target
 
 [Service]
 Type=simple
-ExecStart=%h/.local/bin/fw13-kb-autolight.py
+ExecStart=%h/.local/bin/kb-autolight.py
 Restart=on-failure
 RestartSec=10
 Environment=PYTHONUNBUFFERED=1

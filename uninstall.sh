@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DAEMON_NAME="fw13-kb-autolight"
+DAEMON_NAME="kb-autolight"
 
 BIN_DIR="$HOME/.local/bin"
 CONFIG_DIR="$HOME/.config/$DAEMON_NAME"

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fw13-kb-autolight — Automatic keyboard backlight control for Linux laptops.
+kb-autolight — Automatic keyboard backlight control for Linux laptops.
 
 Reads the ambient light sensor and toggles the keyboard backlight via logind D-Bus.
 Uses debounce to avoid flickering when turning off.
@@ -27,7 +27,7 @@ DEFAULTS = {
     "keyboard": "",
 }
 
-CONFIG_PATH = os.path.expanduser("~/.config/fw13-kb-autolight/fw13-kb-autolight.conf")
+CONFIG_PATH = os.path.expanduser("~/.config/kb-autolight/kb-autolight.conf")
 SENSOR_GLOB = "/sys/bus/iio/devices/iio:device*/in_illuminance_raw"
 KBD_BACKLIGHT_GLOB = "/sys/class/leds/*kbd_backlight"
 

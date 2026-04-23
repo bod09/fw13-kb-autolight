@@ -1,4 +1,4 @@
-# fw13-kb-autolight
+# kb-autolight
 
 Automatic keyboard backlight control based on ambient light for Linux laptops.
 
@@ -34,28 +34,28 @@ No additional packages to install — uses `busctl` (part of systemd) to control
 ## Installation
 
 ```bash
-curl -L https://github.com/bod09/fw13-kb-autolight/archive/refs/heads/main.tar.gz | tar xz
-cd fw13-kb-autolight-main
+curl -L https://github.com/bod09/kb-autolight/archive/refs/heads/main.tar.gz | tar xz
+cd kb-autolight-main
 ./install.sh
 ```
 
 Or if you have git installed:
 
 ```bash
-git clone https://github.com/bod09/fw13-kb-autolight.git
-cd fw13-kb-autolight
+git clone https://github.com/bod09/kb-autolight.git
+cd kb-autolight
 ./install.sh
 ```
 
 The install script will:
 1. Check for Python 3, keyboard backlight, and the ambient light sensor
 2. Install the daemon to `~/.local/bin/`
-3. Install the default config to `~/.config/fw13-kb-autolight/`
+3. Install the default config to `~/.config/kb-autolight/`
 4. Install and start a systemd user service (no root needed)
 
 ## Configuration
 
-Edit `~/.config/fw13-kb-autolight/fw13-kb-autolight.conf`:
+Edit `~/.config/kb-autolight/kb-autolight.conf`:
 
 ```ini
 [thresholds]
@@ -77,7 +77,7 @@ device =        # Leave blank for auto-detect, or set full sysfs path
 After editing, restart the service:
 
 ```bash
-systemctl --user restart fw13-kb-autolight
+systemctl --user restart kb-autolight
 ```
 
 ### Finding your sensor values
@@ -120,19 +120,19 @@ The daemon auto-detects this, but you can pin it in the config under `[backlight
 
 ```bash
 # Check service status
-systemctl --user status fw13-kb-autolight
+systemctl --user status kb-autolight
 
 # View live logs
-journalctl --user -u fw13-kb-autolight -f
+journalctl --user -u kb-autolight -f
 
 # Restart after config changes
-systemctl --user restart fw13-kb-autolight
+systemctl --user restart kb-autolight
 
 # Stop temporarily
-systemctl --user stop fw13-kb-autolight
+systemctl --user stop kb-autolight
 
 # Start again
-systemctl --user start fw13-kb-autolight
+systemctl --user start kb-autolight
 ```
 
 ## Uninstallation
@@ -140,15 +140,15 @@ systemctl --user start fw13-kb-autolight
 If you still have the source folder:
 
 ```bash
-cd fw13-kb-autolight-main
+cd kb-autolight-main
 ./uninstall.sh
 ```
 
 Or re-download and uninstall:
 
 ```bash
-curl -L https://github.com/bod09/fw13-kb-autolight/archive/refs/heads/main.tar.gz | tar xz
-./fw13-kb-autolight-main/uninstall.sh
+curl -L https://github.com/bod09/kb-autolight/archive/refs/heads/main.tar.gz | tar xz
+./kb-autolight-main/uninstall.sh
 ```
 
 This stops the service, removes the daemon and service file, and optionally removes the config directory.
@@ -175,7 +175,7 @@ echo "hid_sensor_als" | sudo tee /etc/modules-load.d/hid_sensor_als.conf
 Check the logs for errors:
 
 ```bash
-journalctl --user -u fw13-kb-autolight --no-pager -n 50
+journalctl --user -u kb-autolight --no-pager -n 50
 ```
 
 Common causes:
