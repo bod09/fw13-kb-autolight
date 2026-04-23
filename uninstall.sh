@@ -8,11 +8,9 @@ CONFIG_DIR="$HOME/.config/$DAEMON_NAME"
 SERVICE_DIR="$HOME/.config/systemd/user"
 
 GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
 NC='\033[0m'
 
-info()  { echo -e "${GREEN}[INFO]${NC} $*"; }
-warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
+info() { echo -e "${GREEN}[INFO]${NC} $*"; }
 
 # --- Stop and disable service ---
 

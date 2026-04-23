@@ -62,7 +62,7 @@ device =        # Leave blank for auto-detect, or set device name
 
 [polling]
 interval = 1    # Seconds between sensor reads
-debounce = 3    # Consecutive readings needed before switching
+debounce = 3    # Consecutive readings before turning OFF (on is instant)
 
 [sensor]
 device =        # Leave blank for auto-detect, or set full sysfs path
